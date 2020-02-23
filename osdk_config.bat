@@ -1,0 +1,11 @@
+@ECHO OFF
+
+::
+:: Set the build paremeters
+::
+SET OSDKADDR=$4000
+SET OSDKNAME=generici2c
+SET OSDKFILE=generici2c
+SET TEXTNAME=OricI2C
+SET OSDKLINK=-B
+SET OSDKHEAD=-S1
