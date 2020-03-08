@@ -1,5 +1,5 @@
 ;;;==================================================================
-;;;		Generic I2C Read and Write Routines for Oric
+;;;		I2CCload - Oric Wifi Loader in Combo with Socket Client
 ;;;==================================================================
 
 
@@ -38,15 +38,15 @@ CLK	=	%00000010	;CLK is 2nd byte of Port A	of 6522 (pin3 of chip)
 
 
 auto
-	lda #<Init
+	lda #<Init			;; Load $2f5/6 with jump vector for "!" extension command
 	sta $2f5
-	lda #>Init
+	lda #>Init			
 	sta $2f6
 	rts
 
 
-Init
-	SEI
+Init					;; this is where the above jump vecotr points to.
+	SEI					;; Typing a ! will run this routine.
 	lda #$FF			;; Setup 6522 Via
 	sta ViaDDRA
 	sta I2CPort
@@ -57,9 +57,9 @@ Init
 	sta I2cCountL
 	lda #0
 	sta I2cCountH		;; limit to 255 bytes send/receive at the moment
-Getheader
-	lda #0
-	sta RxBuffL	
+Getheader				;; set up i2c transfer to load 12 bytes from
+	lda #0				;;module and store in $400
+	sta RxBuffL			;; this is the "new" header as sent by the Socket_Client
 	sta I2cCountH
 	sta DATFlag
 	sta DelayFlag
@@ -74,8 +74,8 @@ Getheader
 	sta $8
 	lda #$04
 	sta RxBuffH	
-headerloop
-	jsr GetData
+headerloop				;; get the 12 bytes and store in $400
+	jsr GetData			
 	lda #4
 	sta I2cCountL
 	clc 
@@ -97,14 +97,23 @@ headerloop
 	lda ByteCountH
 	BNE	headerloop		; loop if not all done
 	ldx #0
-transloop
-	lda $400,x
+transloop				; transfer the 12 bytes from $400
+	lda $400,x			;to $00
 	sta $0,x
 	inx
 	cpx #12
 	bne transloop
-
-ByteLoop
+basicend
+	clc
+	lda $0
+	adc $0A
+	sta $9C
+	sta $9e
+	lda $01
+	adc $0B
+	sta $9D
+	sta $9f
+ByteLoop				; now get the data based on the 12 bytes header.
 	jsr GetData
 	lda #4
 	sta I2cCountL
